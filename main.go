@@ -7,7 +7,6 @@ import (
 	"golang.org/x/image/colornames"
 	"image/color"
 	"log"
-	"math"
 	"math/rand"
 	"os"
 	"time"
@@ -19,7 +18,9 @@ var space *cp.Space // Simulation space
 
 const width = 800
 const height = 600
-const numBoxes = 10
+const numBoxes = 1
+const boxWidth = 40
+const boxHeight = 40
 
 type Box struct {
 	x, y float64
@@ -45,16 +46,11 @@ func update(screen *ebiten.Image) error {
 }
 
 func drawBoxes(screen *ebiten.Image) {
-	op := &ebiten.DrawImageOptions{}
 	space.EachBody(func(body *cp.Body) {
 		switch body.UserData {
 		case "box":
-			op.GeoM.Reset()
-			//log.Printf("%v: %f/%f\n", body, body.Position().X, body.Position().Y)
-			op.GeoM.Translate(body.Position().X, body.Position().Y)
-			screen.DrawImage(boxImage, op)
+			ebitenutil.DrawRect(screen, body.Position().X-boxHeight/2, body.Position().Y-boxWidth/2, boxWidth, boxHeight, color.RGBA{80, 80, 80, 255})
 		case "line":
-			//log.Printf("%v: %f/%f\n", body, body.Position().X, body.Position().Y)
 			ebitenutil.DrawLine(screen, 0, body.Position().Y, width, body.Position().Y, colornames.Yellow)
 		}
 	})
@@ -77,21 +73,19 @@ func main() {
 	space.Iterations = 1
 	space.SetGravity(cp.Vector{0, 800})
 
-	// Add floor
 	bf := cp.NewStaticBody()
-	h := 100.0
-	bf.SetPosition(cp.Vector{width / 2, height - h})
+	bf.SetPosition(cp.Vector{width / 2, height})
 	bf.UserData = "line"
-	sf := cp.NewBox(bf, width, h/2, 1.0)
+	sf := cp.NewBox(bf, width, 0, 0.0)
 	space.AddBody(bf)
 	space.AddShape(sf)
 
 	for _, box := range boxes {
-		body := cp.NewBody(1.0, cp.INFINITY)
+		body := cp.NewBody(10.0, cp.INFINITY)
 		body.SetPosition(cp.Vector{X: box.x, Y: box.y})
 		body.UserData = "box"
 
-		shape := cp.NewBox(body, box.w, box.h, 0.0)
+		shape := cp.NewBox(body, box.w, box.h, box.r)
 		shape.SetElasticity(1.0)
 		shape.SetFriction(0)
 
@@ -107,18 +101,12 @@ func main() {
 
 func initBoxes() {
 	rand.Seed(time.Now().Unix())
-	boxImage, _, _ = ebitenutil.NewImageFromFile("box.png", ebiten.FilterDefault)
-	w, h := boxImage.Size()
-	boxWidth := float64(w)
-	boxHeight := float64(h)
 	for i := 0; i < numBoxes; i++ {
-		log.Println("Creating box", i)
 		boxes = append(boxes, Box{
-			x: rand.Float64() * (width - boxWidth),
-			y: rand.Float64()*50 + boxHeight/2.0,
+			x: rand.Float64()*(width-boxWidth) + boxWidth,
+			y: rand.Float64()*(height-boxHeight) + boxHeight,
 			w: boxWidth,
 			h: boxHeight,
-			r: rand.Float64() * 2 * math.Pi,
 		})
 	}
 }
