@@ -31,7 +31,18 @@ type Box struct {
 var boxImage *ebiten.Image
 var boxes = []Box{}
 
+var down = 0
+
 func update(screen *ebiten.Image) error {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && down < 0 {
+		down = 10 // FPS fix
+		x, y := ebiten.CursorPosition()
+		b := addBox(float64(x), float64(y))
+		addBoxToPhysics(b)
+	} else {
+		down--
+	}
+
 	checkExit()
 	space.Step(1.0 / float64(ebiten.MaxTPS()))
 
@@ -81,16 +92,7 @@ func main() {
 	space.AddShape(sf)
 
 	for _, box := range boxes {
-		body := cp.NewBody(10.0, cp.INFINITY)
-		body.SetPosition(cp.Vector{X: box.x, Y: box.y})
-		body.UserData = "box"
-
-		shape := cp.NewBox(body, box.w, box.h, box.r)
-		shape.SetElasticity(1.0)
-		shape.SetFriction(0)
-
-		space.AddBody(body)
-		space.AddShape(shape)
+		body := addBoxToPhysics(box)
 		log.Printf("Creating body %v\n", body)
 	}
 
@@ -99,14 +101,34 @@ func main() {
 	}
 }
 
+func addBoxToPhysics(box Box) *cp.Body {
+	body := cp.NewBody(10.0, cp.INFINITY)
+	body.SetPosition(cp.Vector{X: box.x, Y: box.y})
+	body.UserData = "box"
+
+	shape := cp.NewBox(body, box.w, box.h, box.r)
+	shape.SetElasticity(1.0)
+	shape.SetFriction(0)
+
+	space.AddBody(body)
+	space.AddShape(shape)
+	return body
+}
+
 func initBoxes() {
 	rand.Seed(time.Now().Unix())
 	for i := 0; i < numBoxes; i++ {
-		boxes = append(boxes, Box{
-			x: rand.Float64()*(width-boxWidth) + boxWidth,
-			y: rand.Float64()*(height-boxHeight) + boxHeight,
-			w: boxWidth,
-			h: boxHeight,
-		})
+		addBox(rand.Float64()*(width-boxWidth)+boxWidth, rand.Float64()*(height-boxHeight)+boxHeight)
 	}
+}
+
+func addBox(px, py float64) Box {
+	box := Box{
+		x: px,
+		y: py,
+		w: boxWidth,
+		h: boxHeight,
+	}
+	boxes = append(boxes, box)
+	return box
 }
