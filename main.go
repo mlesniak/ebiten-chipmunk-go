@@ -1,21 +1,30 @@
 package main
 
 import (
+	"image/color"
 	"log"
 	"os"
 )
 import "github.com/hajimehoshi/ebiten"
 
 func update(screen *ebiten.Image) error {
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		os.Exit(0)
-	}
-
+	checkExit()
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
 
+	background(screen)
 	return nil
+}
+
+func background(screen *ebiten.Image) error {
+	return screen.Fill(color.Gray{Y: 30})
+}
+
+func checkExit() {
+	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+		os.Exit(0)
+	}
 }
 
 func main() {
