@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
+	"github.com/jakecoffman/cp"
 	"image/color"
 	"log"
 	"math/rand"
@@ -10,6 +11,8 @@ import (
 
 	_ "image/png"
 )
+
+var space *cp.Space // Simulation space
 
 const width = 800
 const height = 600
@@ -25,12 +28,19 @@ var boxes = make([]Box, numBoxes)
 
 func update(screen *ebiten.Image) error {
 	checkExit()
+	space.Step(1.0 / float64(ebiten.MaxTPS()))
 
 	if ebiten.IsDrawingSkipped() {
 		return nil
 	}
 
 	background(screen)
+	drawBoxes(screen)
+
+	return nil
+}
+
+func drawBoxes(screen *ebiten.Image) {
 	for _, box := range boxes {
 		op := &ebiten.DrawImageOptions{}
 		w, h := boxImage.Size()
@@ -40,8 +50,6 @@ func update(screen *ebiten.Image) error {
 		op.GeoM.Translate(box.x, box.y)
 		screen.DrawImage(boxImage, op)
 	}
-
-	return nil
 }
 
 func background(screen *ebiten.Image) error {
@@ -55,6 +63,26 @@ func checkExit() {
 }
 
 func main() {
+	initBoxes()
+
+	space = cp.NewSpace()
+	space.Iterations = 1
+
+	for _, box := range boxes {
+		body := cp.NewBody(1.0, cp.INFINITY)
+		body.SetPosition(cp.Vector{X: box.x, Y: box.y})
+
+		shape := cp.NewBox(body, box.w, box.h, 0.0)
+		space.AddBody(body)
+		space.AddShape(shape)
+	}
+
+	if err := ebiten.Run(update, width, height, 1, "Physics Demo"); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func initBoxes() {
 	boxImage, _, _ = ebitenutil.NewImageFromFile("box.png", ebiten.FilterDefault)
 	boxWidth := 40.0
 	boxHeight := 40.0
@@ -65,9 +93,5 @@ func main() {
 			w: boxWidth,
 			h: boxHeight,
 		})
-	}
-
-	if err := ebiten.Run(update, width, height, 1, "Physics Demo"); err != nil {
-		log.Fatal(err)
 	}
 }
