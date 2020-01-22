@@ -32,20 +32,17 @@ var boxImage *ebiten.Image
 var boxes = []Box{}
 var lastClicked = 0 // Frames to wait until the next mouse click is registered.
 
-func main() {
+func init() {
 	boxImage, _, _ = ebitenutil.NewImageFromFile("box.png", ebiten.FilterDefault)
-	initBoxes()
+}
+
+func main() {
 
 	space = cp.NewSpace()
 	space.Iterations = 1000
 	space.SetGravity(cp.Vector{0, 500})
 
 	addFloor()
-
-	for _, box := range boxes {
-		body := addBoxToPhysics(box)
-		log.Printf("Creating body %v\n", body)
-	}
 
 	if err := ebiten.Run(update, width, height, 1, "Physics Demo"); err != nil {
 		log.Fatal(err)
