@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/jakecoffman/cp"
@@ -38,7 +37,7 @@ func main() {
 	initBoxes()
 
 	space = cp.NewSpace()
-	space.Iterations = 1
+	space.Iterations = 10
 	space.SetGravity(cp.Vector{0, 800})
 
 	addFloor()
@@ -86,7 +85,7 @@ func drawBoxes(screen *ebiten.Image) {
 	space.EachBody(func(body *cp.Body) {
 		switch body.UserData {
 		case "box":
-			fmt.Printf("%.2f\n", body.Rotation().ToAngle())
+			//fmt.Printf("%.2f\n", body.Rotation().ToAngle())
 			op.GeoM.Reset()
 			op.GeoM.Rotate(body.Angle())
 			op.GeoM.Translate(body.Position().X-boxWidth/2, body.Position().Y-boxHeight/2)
@@ -108,18 +107,19 @@ func checkExit() {
 }
 
 func addFloor() {
+	floorHeight := 100.0
 	bf := cp.NewStaticBody()
-	bf.SetPosition(cp.Vector{width / 2, height})
+	bf.SetPosition(cp.Vector{width / 2, height + floorHeight/2})
 	bf.UserData = "line"
-	sf := cp.NewBox(bf, width, 0, 0.0)
+	sf := cp.NewBox(bf, width, floorHeight, 0.0)
 	space.AddBody(bf)
 	space.AddShape(sf)
 }
 
 func addBoxToPhysics(box Box) *cp.Body {
-	body := cp.NewBody(100.0, cp.INFINITY)
+	body := cp.NewBody(1000.0, cp.INFINITY)
 	body.SetPosition(cp.Vector{X: box.x, Y: box.y})
-	body.SetAngle(box.r)
+	//body.SetAngle(box.r)
 	body.UserData = "box"
 
 	shape := cp.NewBox(body, box.w, box.h, 0.0)
