@@ -95,7 +95,7 @@ func drawBoxes(screen *ebiten.Image) {
 			op.GeoM.Translate(body.Position().X, body.Position().Y)
 			screen.DrawImage(boxImage, op)
 		case "line":
-			ebitenutil.DrawLine(screen, 0, body.Position().Y, width, body.Position().Y, colornames.Yellow)
+			ebitenutil.DrawLine(screen, 0, body.Position().Y, width, body.Position().Y, colornames.Gray)
 			//ebitenutil.DrawLine(screen, 0, height-20, width, height-20, colornames.Yellow)
 		}
 	})
@@ -112,11 +112,11 @@ func checkExit() {
 }
 
 func addFloor() {
-	floorHeight := 1000.0
+	deltaY := 20.
 	bf := cp.NewStaticBody()
-	bf.SetPosition(cp.Vector{width / 2, height + floorHeight/2 - 20})
+	bf.SetPosition(cp.Vector{width / 2, height - deltaY})
 	bf.UserData = "line"
-	sf := cp.NewBox(bf, width, floorHeight, 0.0)
+	sf := cp.NewBox(bf, width, 2, 0.0)
 	sf.SetFriction(1.0)
 	sf.SetElasticity(0.0)
 	space.AddBody(bf)
