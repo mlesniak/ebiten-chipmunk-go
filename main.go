@@ -37,8 +37,8 @@ func main() {
 	initBoxes()
 
 	space = cp.NewSpace()
-	space.Iterations = 10
-	space.SetGravity(cp.Vector{0, 800})
+	space.Iterations = 1000
+	space.SetGravity(cp.Vector{0, 500})
 
 	addFloor()
 
@@ -56,7 +56,7 @@ func update(screen *ebiten.Image) error {
 	// Input handling.
 	checkExit()
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && lastClicked < 0 {
-		lastClicked = 10 // FPS fix
+		lastClicked = 20 // FPS fix
 		x, y := ebiten.CursorPosition()
 		b := addBox(float64(x), float64(y))
 		addBoxToPhysics(b)
@@ -85,13 +85,18 @@ func drawBoxes(screen *ebiten.Image) {
 	space.EachBody(func(body *cp.Body) {
 		switch body.UserData {
 		case "box":
-			//fmt.Printf("%.2f\n", body.Rotation().ToAngle())
+			angle := body.Rotation().ToAngle()
+			angle = angle / 180 * math.Pi
+			//fmt.Printf("BOX (%.2f/%.2f);%.2f\n", body.Position().X, body.Position().Y, angle)
 			op.GeoM.Reset()
+			// Center of image
+			op.GeoM.Translate(-float64(boxWidth)/2, -float64(boxHeight)/2)
 			op.GeoM.Rotate(body.Angle())
-			op.GeoM.Translate(body.Position().X-boxWidth/2, body.Position().Y-boxHeight/2)
+			op.GeoM.Translate(body.Position().X, body.Position().Y)
 			screen.DrawImage(boxImage, op)
 		case "line":
 			ebitenutil.DrawLine(screen, 0, body.Position().Y, width, body.Position().Y, colornames.Yellow)
+			//ebitenutil.DrawLine(screen, 0, height-20, width, height-20, colornames.Yellow)
 		}
 	})
 }
@@ -107,22 +112,27 @@ func checkExit() {
 }
 
 func addFloor() {
-	floorHeight := 100.0
+	floorHeight := 1000.0
 	bf := cp.NewStaticBody()
-	bf.SetPosition(cp.Vector{width / 2, height + floorHeight/2})
+	bf.SetPosition(cp.Vector{width / 2, height + floorHeight/2 - 20})
 	bf.UserData = "line"
 	sf := cp.NewBox(bf, width, floorHeight, 0.0)
+	sf.SetFriction(1.0)
+	sf.SetElasticity(0.0)
 	space.AddBody(bf)
 	space.AddShape(sf)
 }
 
 func addBoxToPhysics(box Box) *cp.Body {
-	body := cp.NewBody(1000.0, cp.INFINITY)
+	body := cp.NewBody(1.0, 1)
 	body.SetPosition(cp.Vector{X: box.x, Y: box.y})
-	//body.SetAngle(box.r)
+	rad := (rand.Float64() * 360) * 180 / math.Pi
+	body.SetAngle(rad)
 	body.UserData = "box"
 
 	shape := cp.NewBox(body, box.w, box.h, 0.0)
+	shape.SetFriction(1.0)
+	shape.SetElasticity(0.0)
 	space.AddBody(body)
 	space.AddShape(shape)
 	return body
